@@ -3,43 +3,79 @@ const Robot = require("../models/robot.model");
 
 // Get robots count
 async function getRobotsCount(req, res) {
-  const { name } = req.query;
+  const name = req.query.name || "";
   try {
     const count = await Robot.countDocuments({
-      name: { $regex: name, $options: "i" },
+      name: { $regex: name, $options: "i" }, // "i" for case-insensitive
     });
     res.json({ count });
   } catch (err) {
+    console.log(
+      "robot.controller, getRobotsCount. Error while getting robots count",
+      err
+    );
     res.status(500).json({ message: err.message });
   }
 }
 
 // Get all robots
 async function getRobots(req, res) {
-  const { name } = req.query;
+  const name = req.query.name || "";
 
   try {
     const robots = await Robot.find({
-      name: { $regex: name, $options: "i" },
+      name: { $regex: name, $options: "i" }, // "i" for case-insensitive
     });
     res.json(robots);
   } catch (err) {
+    console.log("robot.controller, getRobots. Error while getting robots", err);
     res.status(500).json({ message: err.message });
   }
 }
 
-// Get a single robot
+// Get single robot
 async function getRobotById(req, res) {
+  const { id } = req.params;
   try {
-    const robot = await Robot.findById(req.params.id);
-    if (!robot) return res.status(404).json({ message: "Robot not found" });
+    const robot = await Robot.findById(id);
+    if (!robot) {
+      console.log(
+        `robot.controller, getRobotById. Robot not found with id: ${id}`
+      );
+      return res.status(404).json({ message: "Robot not found" });
+    }
     res.json(robot);
   } catch (err) {
+    console.log(
+      `robot.controller, getRobotById. Error while getting robot with id: ${id}`
+    );
     res.status(500).json({ message: err.message });
   }
 }
 
-// Create a new robot
+// Delete robot
+async function deleteRobot(req, res) {
+  const { id } = req.params;
+  try {
+    const deletedRobot = await Robot.findByIdAndDelete(id);
+
+    if (!deletedRobot) {
+      console.log(
+        `robot.controller, deleteRobot. Robot not found with id: ${id}`
+      );
+      return res.status(404).json({ message: "Robot not found" });
+    }
+
+    res.json({ message: "Robot deleted" });
+  } catch (err) {
+    console.log(
+      `robot.controller, deleteRobot. Error while deleting robot with id: ${id}`
+    );
+    res.status(500).json({ message: err.message });
+  }
+}
+
+// Create new robot
 async function createRobot(req, res) {
   const robotToAdd = req.body;
   const newRobot = new Robot(robotToAdd);
@@ -48,11 +84,22 @@ async function createRobot(req, res) {
     const savedRobot = await newRobot.save();
     res.status(201).json(savedRobot);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.log(
+      "robot.controller, createRobot. Error while creating robot",
+      err
+    );
+
+    if (err.name === "ValidationError") {
+      // Mongoose validation error
+      res.status(400).json({ message: err.message });
+    } else {
+      // Other types of errors
+      res.status(500).json({ message: "Server error while creating robot" });
+    }
   }
 }
 
-// Update an robot
+// Update robot
 async function updateRobot(req, res) {
   const { id } = req.params;
   const { name, manufacturer, model, battery } = req.body;
@@ -61,31 +108,30 @@ async function updateRobot(req, res) {
     const updatedRobot = await Robot.findByIdAndUpdate(
       id,
       { name, manufacturer, model, battery: battery },
-      { new: true } // return the modified document rather than the original
+      { new: true, runValidators: true } // validate before updating
     );
 
-    if (!updatedRobot)
-      return res.status(404).json({ message: "Robot not found" });
-
-    res.json(updatedRobot);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-}
-
-// Delete an robot
-async function deleteRobot(req, res) {
-  const { id } = req.params;
-  try {
-    const deletedRobot = await Robot.findByIdAndDelete(id);
-
-    if (!deletedRobot) {
+    if (!updatedRobot) {
+      console.log(
+        `robot.controller, updateRobot. Robot not found with id: ${id}`
+      );
       return res.status(404).json({ message: "Robot not found" });
     }
 
-    res.json({ message: "Robot deleted" });
+    res.json(updatedRobot);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.log(
+      `robot.controller, updateRobot. Error while updating robot with id: ${id}`,
+      err
+    );
+
+    if (err.name === "ValidationError") {
+      // Mongoose validation error
+      res.status(400).json({ message: err.message });
+    } else {
+      // Other types of errors
+      res.status(500).json({ message: "Server error while updating robot" });
+    }
   }
 }
 

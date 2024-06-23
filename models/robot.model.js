@@ -18,6 +18,7 @@ const RobotSchema = new mongoose.Schema(
     battery: {
       type: Number,
       default: 100,
+      required: true,
     },
   },
   { timestamps: true }
