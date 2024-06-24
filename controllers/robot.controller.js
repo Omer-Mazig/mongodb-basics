@@ -25,7 +25,9 @@ async function getRobots(req, res) {
   try {
     const robots = await Robot.find({
       name: { $regex: name, $options: "i" }, // "i" for case-insensitive
-    });
+    })
+      .skip(2)
+      .limit(2);
     res.json(robots);
   } catch (err) {
     console.log("robot.controller, getRobots. Error while getting robots", err);
@@ -38,16 +40,17 @@ async function getRobotById(req, res) {
   const { id } = req.params;
   try {
     const robot = await Robot.findById(id);
-    if (!robot) {
+    res.json(robot);
+  } catch (err) {
+    if (err.name === "CastError") {
       console.log(
         `robot.controller, getRobotById. Robot not found with id: ${id}`
       );
       return res.status(404).json({ message: "Robot not found" });
     }
-    res.json(robot);
-  } catch (err) {
     console.log(
-      `robot.controller, getRobotById. Error while getting robot with id: ${id}`
+      `robot.controller, getRobotById. Error while getting robot with id: ${id}`,
+      err.name
     );
     res.status(500).json({ message: err.message });
   }
@@ -91,9 +94,11 @@ async function createRobot(req, res) {
 
     if (err.name === "ValidationError") {
       // Mongoose validation error
+      console.log(`robot.controller, createRobot. ${err.message}`);
       res.status(400).json({ message: err.message });
     } else {
       // Other types of errors
+      console.log(`robot.controller, createRobot. ${err.message}`);
       res.status(500).json({ message: "Server error while creating robot" });
     }
   }
@@ -107,7 +112,7 @@ async function updateRobot(req, res) {
   try {
     const updatedRobot = await Robot.findByIdAndUpdate(
       id,
-      { name, manufacturer, model, battery: battery },
+      { name, manufacturer, model, battery },
       { new: true, runValidators: true } // validate before updating
     );
 
@@ -127,9 +132,11 @@ async function updateRobot(req, res) {
 
     if (err.name === "ValidationError") {
       // Mongoose validation error
+      console.log(`robot.controller, updateRobot. ${err.message}`);
       res.status(400).json({ message: err.message });
     } else {
       // Other types of errors
+      console.log(`robot.controller, updateRobot. ${err.message}`);
       res.status(500).json({ message: "Server error while updating robot" });
     }
   }

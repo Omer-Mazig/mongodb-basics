@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 // Create a schema
-const RobotSchema = new mongoose.Schema(
+const robotSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -18,11 +18,13 @@ const RobotSchema = new mongoose.Schema(
     battery: {
       type: Number,
       default: 100,
+      min: 0,
+      max: 100,
       required: true,
     },
   },
   { timestamps: true }
 );
 
-const Robot = mongoose.model("Robot", RobotSchema);
+const Robot = mongoose.model("Robot", robotSchema);
 module.exports = Robot;

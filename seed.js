@@ -1,6 +1,6 @@
 // seed.js
 // This script seeds the database with sample data.
-// This is for development purposes only and should not be used in robotion.
+// This is for development purposes only and should not be used in production.
 
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
